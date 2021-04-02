@@ -1,0 +1,40 @@
+plugins {
+    id "java"
+    id "com.github.johnrengelman.shadow" version "6.1.0"
+}
+
+def config = new groovy.json.JsonSlurper().parseText(file("src/main/resources/plugin.hjson").text)
+
+version = config.version
+
+sourceCompatibility = JavaVersion.VERSION_11
+
+repositories{
+    mavenCentral()
+    mavenCentral()
+    maven { url 'https://repo.spongepowered.org/maven' }
+    maven { url 'https://repo.velocitypowered.com/snapshots/' }
+    maven { url 'https://libraries.minecraft.net' }
+    maven { url 'https://jitpack.io' }
+}
+
+ext{
+    mindustryVersion = "v120"
+}
+
+dependencies{
+    compileOnly "com.github.Anuken.Arc:arc-core:$mindustryVersion"
+    compileOnly "com.github.Anuken.Mindustry:core:$mindustryVersion"
+    implementation 'com.github.Minestom:Minestom:-SNAPSHOT'
+}
+
+jar{
+    archiveFileName = config.name+"-"+config.version+".jar"
+    from{
+        configurations.runtimeClasspath.collect{it.isDirectory() ? it : zipTree(it)}
+    }
+
+    manifest {
+        attributes 'Main-Class': config.main
+    }
+}
