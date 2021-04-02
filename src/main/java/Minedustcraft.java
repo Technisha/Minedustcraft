@@ -8,15 +8,17 @@ import mindustry.gen.Call;
 import mindustry.gen.Player;
 import mindustry.mod.Plugin;
 import net.minestom.server.MinecraftServer;
+import net.minestom.server.extras.optifine.OptifineSupport;
 
 public class Minedustcraft extends Plugin {
     @Override
     public void init(){
         MinecraftServer minecraftServer = MinecraftServer.init();
+        OptifineSupport.enable();
         Events.on(EventType.BuildSelectEvent.class, event -> {
             Player player = event.builder.getPlayer();
-            Call.sendMessage("[scarlet]ALERT![] " + player.name + " has begun building at " + event.tile.x + ", " + event.tile.y);
         });
+        minecraftServer.start("0.0.0.0", 25565);
     }
 
     @Override
