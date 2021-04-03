@@ -19,7 +19,7 @@ repositories{
 }
 
 ext{
-    mindustryVersion = "v120"
+    mindustryVersion = "v126"
 }
 
 dependencies{

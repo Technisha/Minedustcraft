@@ -77,7 +77,7 @@ public class PlayerInit {
             } else {
                 tmp = String.valueOf(Vars.netServer.admins.getPlayerLimit());
             }
-            final Component footer = Component.text("There are currently "+Groups.player.size()+players.size()+" out of "+tmp+" players");
+            final Component footer = Component.text("There are currently "+Integer.valueOf(Groups.player.size()+players.size())+" out of "+tmp+" players");
             Core.settings.put("totalPlayers", Groups.player.size()+players.size());
             Audiences.players().sendPlayerListHeaderAndFooter(header, footer);
 
