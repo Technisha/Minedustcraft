@@ -19,6 +19,8 @@ import net.minestom.server.entity.damage.DamageType;
 import net.minestom.server.entity.fakeplayer.FakePlayer;
 import net.minestom.server.event.GlobalEventHandler;
 import net.minestom.server.event.entity.EntityAttackEvent;
+import net.minestom.server.event.inventory.InventoryClickEvent;
+import net.minestom.server.event.inventory.InventoryPreClickEvent;
 import net.minestom.server.event.item.ItemDropEvent;
 import net.minestom.server.event.item.PickupItemEvent;
 import net.minestom.server.event.player.*;
@@ -81,8 +83,8 @@ public class PlayerInit {
             } else {
                 tmp = String.valueOf(Vars.netServer.admins.getPlayerLimit());
             }
-            final Component footer = Component.text("There are currently "+Integer.valueOf(Groups.player.size()+players.size())+" out of "+tmp+" players");
-            Core.settings.put("totalPlayers", Groups.player.size()+players.size());
+            final Component footer = Component.text("There are currently "+Integer.valueOf(Groups.player.size())+" out of "+tmp+" players");
+            Core.settings.put("totalPlayers", Groups.player.size());
             Audiences.players().sendPlayerListHeaderAndFooter(header, footer);
 
         }).repeat(10, TimeUnit.TICK).schedule();
@@ -102,8 +104,9 @@ public class PlayerInit {
         List<mindustry.gen.Player> mPlayers = new ArrayList<mindustry.gen.Player>();
         List<FakePlayer> mcPlayers = new ArrayList<FakePlayer>();
         net.minestom.server.entity.fakeplayer.FakePlayerOption fakePlayerOption = new net.minestom.server.entity.fakeplayer.FakePlayerOption();
+        fakePlayerOption.setRegistered(true);
         fakePlayerOption.setInTabList(true);
-        fakePlayerOption.setRegistered(false);
+
         // EVENT REGISTERING
 
         GlobalEventHandler globalEventHandler = MinecraftServer.getGlobalEventHandler();
@@ -121,6 +124,11 @@ public class PlayerInit {
         });
 
         Events.on(EventType.PlayerLeave.class, e -> {
+            mcPlayers.forEach(mcPlayer -> {
+                if (mcPlayer.getUsername().equals(e.player.name()+"|Mindustry")) {
+                    mcPlayers.remove(mcPlayer);
+                }
+            });
             if (e.player == null) {
                 return;
             }
@@ -200,13 +208,16 @@ public class PlayerInit {
         
         globalEventHandler.addEventCallback(PlayerDisconnectEvent.class, event -> {
             net.minestom.server.entity.Player player = event.getPlayer();
-            // mindustry.gen.Player mPlayer = mindustry.gen.Player.create();
             mPlayers.forEach(mPlayer -> {
                 if (mPlayer.name().equals(player.getUsername()+"|Minecraft")) {
                     mPlayer.remove();
                 }
             });
-            System.out.println("DISCONNECTION " + player.getUsername());
+            Groups.player.forEach(mdPlayer -> {
+                try {
+                    mdPlayer.sendMessage("[#f3cc7a] "+player.getUsername()+"|Minecraft has disconnected.");
+                } catch (NullPointerException e) {}
+            });
         });
 
         globalEventHandler.addEventCallback(PlayerLoginEvent.class, event -> {
@@ -238,10 +249,11 @@ public class PlayerInit {
             player.setPermissionLevel(0);
             mindustry.gen.Player mPlayer = mindustry.gen.Player.create();
             mPlayers.forEach(i -> {
-                if (i.name().equals(player.getUsername()+"|Minecraft")) {
-                    mPlayer.set(i);
-                }
-            });
+                if (i.name().equals(player.getUsername() + "|Minecraft")) {
+                        mPlayer.set(i);
+                    }
+                });
+
 
             player.teleport(new Position(mPlayer.x, 42f, mPlayer.y));
 
@@ -249,16 +261,16 @@ public class PlayerInit {
             ItemStack itemStack = new ItemStack(Material.STONE, (byte) 64);
             inventory.addItemStack(itemStack);
 
-            {
-                ItemStack item = new ItemStack(Material.DIAMOND_CHESTPLATE, (byte) 1);
-                inventory.setChestplate(item);
-                item.setDisplayName(Component.text("test"));
+            ItemStack item = new ItemStack(Material.REDSTONE_LAMP, (byte) 1);
+            inventory.setHelmet(item);
+            item.setDisplayName(Component.text("Ship Helmet"));
+            inventory.refreshSlot((short) PlayerInventoryUtils.HELMET_SLOT);
+        });
 
-                inventory.refreshSlot((short) PlayerInventoryUtils.CHESTPLATE_SLOT);
-
+        globalEventHandler.addEventCallback(InventoryPreClickEvent.class, event -> {
+            if (PlayerInventoryUtils.HELMET_SLOT == event.getSlot()) {
+                event.setCancelled(true);
             }
-
-            //player.getInventory().addItemStack(new ItemStack(Material.STONE, (byte) 32));
         });
 
         globalEventHandler.addEventCallback(PlayerBlockBreakEvent.class, event -> {
