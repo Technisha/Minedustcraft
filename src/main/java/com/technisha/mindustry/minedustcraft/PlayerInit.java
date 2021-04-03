@@ -4,16 +4,15 @@ import arc.Core;
 import com.technisha.mindustry.minedustcraft.generator.CChunkGenerator;
 import mindustry.Vars;
 import mindustry.gen.Groups;
+import mindustry.gen.Player;
 import mindustry.net.Administration;
 import net.kyori.adventure.text.Component;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.adventure.audience.Audiences;
 import net.minestom.server.benchmark.BenchmarkManager;
-import net.minestom.server.chat.ColoredText;
 import net.minestom.server.entity.Entity;
 import net.minestom.server.entity.GameMode;
 import net.minestom.server.entity.ItemEntity;
-import net.minestom.server.entity.Player;
 import net.minestom.server.entity.damage.DamageType;
 import net.minestom.server.event.GlobalEventHandler;
 import net.minestom.server.event.entity.EntityAttackEvent;
@@ -39,14 +38,12 @@ import net.minestom.server.utils.inventory.PlayerInventoryUtils;
 import net.minestom.server.utils.time.TimeUnit;
 import net.minestom.server.world.DimensionType;
 
-import java.util.Collection;
-import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class PlayerInit {
 
     private static final InstanceContainer instanceContainer;
-
     private static final Inventory inventory;
 
     static {
@@ -69,14 +66,12 @@ public class PlayerInit {
     public static void init() {
         ConnectionManager connectionManager = MinecraftServer.getConnectionManager();
         BenchmarkManager benchmarkManager = MinecraftServer.getBenchmarkManager();
-
         MinecraftServer.getSchedulerManager().buildTask(() -> {
 
-            Collection<Player> players = connectionManager.getOnlinePlayers();
+            Collection<net.minestom.server.entity.Player> players = connectionManager.getOnlinePlayers();
 
             if (players.isEmpty())
                 return;
-            Integer currentPlayers = Groups.player.size()+players.size();
             final Component header = Component.text("Playing on: "+ Administration.Config.name.string());
             String tmp;
             if (Vars.netServer.admins.getPlayerLimit() == 0) {
@@ -84,8 +79,8 @@ public class PlayerInit {
             } else {
                 tmp = String.valueOf(Vars.netServer.admins.getPlayerLimit());
             }
-            final Component footer = Component.text("There are currently "+currentPlayers+" out of "+tmp+" players");
-            Core.settings.put("totalPlayers", currentPlayers);
+            final Component footer = Component.text("There are currently "+Groups.player.size()+players.size()+" out of "+tmp+" players");
+            Core.settings.put("totalPlayers", Groups.player.size()+players.size());
             Audiences.players().sendPlayerListHeaderAndFooter(header, footer);
 
         }).repeat(10, TimeUnit.TICK).schedule();
@@ -109,8 +104,8 @@ public class PlayerInit {
         globalEventHandler.addEventCallback(EntityAttackEvent.class, event -> {
             final Entity source = event.getEntity();
             final Entity entity = event.getTarget();
-            if (entity instanceof Player) {
-                Player target = (Player) entity;
+            if (entity instanceof net.minestom.server.entity.Player) {
+                net.minestom.server.entity.Player target = (net.minestom.server.entity.Player) entity;
                 Vector velocity = source.getPosition().clone().getDirection().multiply(4);
                 velocity.setY(3.5f);
                 target.setVelocity(velocity);
@@ -121,44 +116,44 @@ public class PlayerInit {
                 entity.setVelocity(velocity);
             }
 
-            if (source instanceof Player) {
-                ((Player) source).sendMessage("You attacked something!");
+            if (source instanceof net.minestom.server.entity.Player) {
+                ((net.minestom.server.entity.Player) source).sendMessage(Component.text("You attacked something!"));
             }
         });
 
         globalEventHandler.addEventCallback(PlayerDeathEvent.class, event -> {
-            event.setChatMessage(ColoredText.of("custom death message"));
+            event.setChatMessage(Component.text("custom death message"));
         });
 
         globalEventHandler.addEventCallback(PlayerBlockPlaceEvent.class, event -> {
-            if (event.getHand() != Player.Hand.MAIN)
+            if (event.getHand() != net.minestom.server.entity.Player.Hand.MAIN)
                 return;
             final Block block = Block.fromStateId(event.getBlockStateId());
         });
 
         globalEventHandler.addEventCallback(PlayerBlockInteractEvent.class, event -> {
-            if (event.getHand() != Player.Hand.MAIN)
+            if (event.getHand() != net.minestom.server.entity.Player.Hand.MAIN)
                 return;
-            final Player player = event.getPlayer();
+            final net.minestom.server.entity.Player player = event.getPlayer();
 
             final short blockStateId = player.getInstance().getBlockStateId(event.getBlockPosition());
             final CustomBlock customBlock = player.getInstance().getCustomBlock(event.getBlockPosition());
             final Block block = Block.fromStateId(blockStateId);
-            player.sendMessage("You clicked at the block " + block + " " + customBlock);
-            player.sendMessage("CHUNK COUNT " + instanceContainer.getChunks().size());
+            player.sendMessage(Component.text("You clicked at the block " + block + " " + customBlock));
+            player.sendMessage(Component.text("CHUNK COUNT " + instanceContainer.getChunks().size()));
         });
 
         globalEventHandler.addEventCallback(PickupItemEvent.class, event -> {
             final Entity entity = event.getLivingEntity();
-            if (entity instanceof Player) {
+            if (entity instanceof net.minestom.server.entity.Player) {
                 // Cancel event if player does not have enough inventory space
                 final ItemStack itemStack = event.getItemEntity().getItemStack();
-                event.setCancelled(!((Player) entity).getInventory().addItemStack(itemStack));
+                event.setCancelled(!((net.minestom.server.entity.Player) entity).getInventory().addItemStack(itemStack));
             }
         });
 
         globalEventHandler.addEventCallback(ItemDropEvent.class, event -> {
-            final Player player = event.getPlayer();
+            final net.minestom.server.entity.Player player = event.getPlayer();
             ItemStack droppedItem = event.getItemStack();
 
             Position position = player.getPosition().clone().add(0, 1.5f, 0);
@@ -169,18 +164,32 @@ public class PlayerInit {
             itemEntity.setVelocity(velocity);
         });
 
+        List<mindustry.gen.Player> mPlayers = new ArrayList<mindustry.gen.Player>();
+        
         globalEventHandler.addEventCallback(PlayerDisconnectEvent.class, event -> {
-            final Player player = event.getPlayer();
+            net.minestom.server.entity.Player player = event.getPlayer();
+            // mindustry.gen.Player mPlayer = mindustry.gen.Player.create();
+            mPlayers.forEach(mPlayer -> {
+                if (mPlayer.name().equals("MC|"+player.getUsername())) {
+                    mPlayer.remove();
+                }
+            });
             System.out.println("DISCONNECTION " + player.getUsername());
         });
 
         globalEventHandler.addEventCallback(PlayerLoginEvent.class, event -> {
-            final Player player = event.getPlayer();
+            final net.minestom.server.entity.Player player = event.getPlayer();
+            mindustry.gen.Player mPlayer = mindustry.gen.Player.create();
+            mPlayer.add();
+            mPlayer.name("MC|"+player.getUsername());
+            mPlayer.name = player.getUsername();
+            mPlayers.add(mPlayer);
+            // Groups.player.add(mPlayer);
 
             event.setSpawningInstance(instanceContainer);
-            int x = Math.abs(ThreadLocalRandom.current().nextInt()) % 1000 - 250;
-            int z = Math.abs(ThreadLocalRandom.current().nextInt()) % 1000 - 250;
-            player.setRespawnPoint(new Position(0, 42f, 0));
+            int x = (int) mPlayer.closestCore().x;
+            int z = (int) mPlayer.closestCore().y;
+            player.setRespawnPoint(new Position(x, 42f, z));
 
             player.getInventory().addInventoryCondition((p, slot, clickType, inventoryConditionResult) -> {
                 if (slot == -999)
@@ -191,10 +200,18 @@ public class PlayerInit {
         });
 
         globalEventHandler.addEventCallback(PlayerSpawnEvent.class, event -> {
-            final Player player = event.getPlayer();
-            player.setGameMode(GameMode.CREATIVE);
+            final net.minestom.server.entity.Player player = event.getPlayer();
+            player.setGameMode(GameMode.SURVIVAL);
 
-            player.setPermissionLevel(4);
+            player.setPermissionLevel(0);
+            mindustry.gen.Player mPlayer = mindustry.gen.Player.create();
+            mPlayers.forEach(i -> {
+                if (i.name().equals("MC|"+player.getUsername())) {
+                    mPlayer.set(i);
+                }
+            });
+
+            player.teleport(new Position(mPlayer.x, 42f, mPlayer.y));
 
             PlayerInventory inventory = player.getInventory();
             ItemStack itemStack = new ItemStack(Material.STONE, (byte) 64);
@@ -203,7 +220,7 @@ public class PlayerInit {
             {
                 ItemStack item = new ItemStack(Material.DIAMOND_CHESTPLATE, (byte) 1);
                 inventory.setChestplate(item);
-                item.setDisplayName(ColoredText.of("test"));
+                item.setDisplayName(Component.text("test"));
 
                 inventory.refreshSlot((short) PlayerInventoryUtils.CHESTPLATE_SLOT);
 
@@ -218,18 +235,18 @@ public class PlayerInit {
         });
 
         globalEventHandler.addEventCallback(PlayerUseItemEvent.class, useEvent -> {
-            final Player player = useEvent.getPlayer();
+            final net.minestom.server.entity.Player player = useEvent.getPlayer();
             player.sendMessage("Using item in air: " + useEvent.getItemStack().getMaterial());
         });
 
         globalEventHandler.addEventCallback(PlayerUseItemOnBlockEvent.class, useEvent -> {
-            final Player player = useEvent.getPlayer();
+            final net.minestom.server.entity.Player player = useEvent.getPlayer();
             player.sendMessage("Main item: " + player.getInventory().getItemInMainHand().getMaterial());
             player.sendMessage("Using item on block: " + useEvent.getItemStack().getMaterial() + " at " + useEvent.getPosition() + " on face " + useEvent.getBlockFace());
         });
 
         globalEventHandler.addEventCallback(PlayerChunkUnloadEvent.class, event -> {
-            final Player player = event.getPlayer();
+            final net.minestom.server.entity.Player player = event.getPlayer();
             final Instance instance = player.getInstance();
 
             Chunk chunk = instance.getChunk(event.getChunkX(), event.getChunkZ());
