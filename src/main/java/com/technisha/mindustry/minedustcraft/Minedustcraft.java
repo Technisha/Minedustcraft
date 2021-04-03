@@ -5,9 +5,7 @@ import arc.Events;
 import arc.util.CommandHandler;
 import arc.util.Log;
 import mindustry.game.EventType;
-import mindustry.gen.Groups;
-import mindustry.gen.Player;
-import mindustry.mod.Plugin;
+import mindustry.gen.*;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import net.minestom.server.MinecraftServer;
@@ -26,11 +24,7 @@ public class Minedustcraft extends Plugin {
         // MojangAuth.init();
 
         globalEventHandler.addEventCallback(net.minestom.server.event.player.PlayerChatEvent.class, e -> {
-            Groups.player.forEach(player -> {
-                try {
-                    player.sendMessage("[#b47144][[[#ffffff]" + e.getPlayer().getUsername() + "|Minecraft[#be6647]][#ba5f3f]: [#ffffff]" + e.getMessage());
-                } catch (java.lang.NullPointerException exception) {}
-            });
+            Call.sendMessage("[#b47144][[[#ffffff]" + e.getPlayer().getUsername() + "|Minecraft[#be6647]][#ba5f3f]: [#ffffff]" + e.getMessage());
         });
 
         Events.on(EventType.PlayerChatEvent.class, e -> {
