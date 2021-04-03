@@ -27,7 +27,7 @@ public class Minedustcraft extends Plugin {
 
         globalEventHandler.addEventCallback(net.minestom.server.event.player.PlayerChatEvent.class, e -> {
             try {
-                Call.sendChatMessage("[" + e.getPlayer().getUsername() + "]: " + e.getMessage());
+                Call.sendChatMessage("[" + e.getPlayer().getUsername() + "]: " + e.getMessage()); // Doesn't send any message at all, probably due to the custom created player units
 
             } catch (java.lang.NullPointerException exception) {
 
@@ -42,21 +42,21 @@ public class Minedustcraft extends Plugin {
         });
 
         Events.on(EventType.GameOverEvent.class, e -> {
-            Audiences.players().sendMessage(Component.text().color(TextColor.color(0xff1111)).append(Component.text("Game over.")));
+            Audiences.players().sendMessage(Component.text("Game over.", TextColor.color(0xff1111)));
         });
 
         Events.on(EventType.PlayerJoin.class, e -> {
             if (e.player == null) {
                 return;
             }
-            Audiences.players().sendMessage(Component.text().color(TextColor.color(0xf3cc7a)).append(Component.text(e.player.name()+" has connected.")));
+            Audiences.players().sendMessage(Component.text(e.player.name()+" has connected.",TextColor.color(0xf3cc7a)));
         });
 
         Events.on(EventType.PlayerLeave.class, e -> {
             if (e.player == null) {
                 return;
             }
-            Audiences.players().sendMessage(Component.text().color(TextColor.color(0xf3cc7a)).append(Component.text(e.player.name()+" has disconnected.")));
+            Audiences.players().sendMessage(Component.text(e.player.name()+" has disconnected.", TextColor.color(0xf3cc7a)));
         });
 
         minecraftServer.start("0.0.0.0", 25565, PlayerInit.getResponseDataConsumer());

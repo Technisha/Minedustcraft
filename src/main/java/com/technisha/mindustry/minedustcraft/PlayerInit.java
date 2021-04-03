@@ -4,7 +4,6 @@ import arc.Core;
 import com.technisha.mindustry.minedustcraft.generator.CChunkGenerator;
 import mindustry.Vars;
 import mindustry.gen.Groups;
-import mindustry.gen.Player;
 import mindustry.net.Administration;
 import net.kyori.adventure.text.Component;
 import net.minestom.server.MinecraftServer;
@@ -39,7 +38,6 @@ import net.minestom.server.utils.time.TimeUnit;
 import net.minestom.server.world.DimensionType;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class PlayerInit {
 
