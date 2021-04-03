@@ -29,7 +29,7 @@ public class Minedustcraft extends Plugin {
         globalEventHandler.addEventCallback(net.minestom.server.event.player.PlayerChatEvent.class, e -> {
             Groups.player.forEach(player -> {
                 try {
-                    player.sendMessage("[#b47144][[#ffffff]" + e.getPlayer().getUsername() + "|Minecraft[#be6647]][#ba5f3f]: [#ffffff]" + e.getMessage()); // Doesn't send any message at all, probably due to the custom created player units
+                    player.sendMessage("[#b47144][[[#ffffff]" + e.getPlayer().getUsername() + "|Minecraft[#be6647]][#ba5f3f]: [#ffffff]" + e.getMessage());
                 } catch (java.lang.NullPointerException exception) {}
             });
         });
