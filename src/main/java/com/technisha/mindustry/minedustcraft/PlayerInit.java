@@ -113,8 +113,9 @@ public class PlayerInit {
                 return;
             }
             if (!mPlayers.contains(e.player)) {
-                FakePlayer mcPlayer = FakePlayer.initPlayer(UUID.fromString(e.player.uuid()), e.player.name()+"|Mindustry", fakePlayerOption, Consumer<FakePlayer> callback = event -> {return});
-                mcPlayers.add(mcPlayer);
+                FakePlayer.initPlayer(UUID.fromString(e.player.uuid()), e.player.name()+"|Mindustry", fakePlayerOption, mcPlayer -> {
+                    mcPlayers.add(mcPlayer);
+                });
             }
             Audiences.players().sendMessage(Component.text(e.player.name()+" has connected.", TextColor.color(0xf3cc7a)));
         });
