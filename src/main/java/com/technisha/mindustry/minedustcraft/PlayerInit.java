@@ -1,11 +1,14 @@
 package com.technisha.mindustry.minedustcraft;
 
 import arc.Core;
+import arc.Events;
 import com.technisha.mindustry.minedustcraft.generator.CChunkGenerator;
 import mindustry.Vars;
+import mindustry.game.EventType;
 import mindustry.gen.Groups;
 import mindustry.net.Administration;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextColor;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.adventure.audience.Audiences;
 import net.minestom.server.benchmark.BenchmarkManager;
@@ -13,6 +16,7 @@ import net.minestom.server.entity.Entity;
 import net.minestom.server.entity.GameMode;
 import net.minestom.server.entity.ItemEntity;
 import net.minestom.server.entity.damage.DamageType;
+import net.minestom.server.entity.fakeplayer.FakePlayer;
 import net.minestom.server.event.GlobalEventHandler;
 import net.minestom.server.event.entity.EntityAttackEvent;
 import net.minestom.server.event.item.ItemDropEvent;
@@ -95,9 +99,40 @@ public class PlayerInit {
             packetController.setCancel(false);
         });
 
+        List<mindustry.gen.Player> mPlayers = new ArrayList<mindustry.gen.Player>();
+        List<FakePlayer> mcPlayers = new ArrayList<FakePlayer>();
+        net.minestom.server.entity.fakeplayer.FakePlayerOption fakePlayerOption = new net.minestom.server.entity.fakeplayer.FakePlayerOption();
+        fakePlayerOption.setInTabList(true);
+        fakePlayerOption.setRegistered(false);
         // EVENT REGISTERING
 
         GlobalEventHandler globalEventHandler = MinecraftServer.getGlobalEventHandler();
+
+        Events.on(EventType.PlayerJoin.class, e -> {
+            if (e.player == null) {
+                return;
+            }
+            if (!mPlayers.contains(e.player)) {
+                FakePlayer mcPlayer = FakePlayer.initPlayer(UUID.fromString(e.player.uuid()), e.player.name()+"|Mindustry", fakePlayerOption, Consumer<FakePlayer> callback = event -> {return});
+                mcPlayers.add(mcPlayer);
+            }
+            Audiences.players().sendMessage(Component.text(e.player.name()+" has connected.", TextColor.color(0xf3cc7a)));
+        });
+
+        Events.on(EventType.PlayerLeave.class, e -> {
+            if (e.player == null) {
+                return;
+            }
+            Audiences.players().sendMessage(Component.text(e.player.name()+" has disconnected.", TextColor.color(0xf3cc7a)));
+        });
+
+        Events.on(EventType.WorldLoadEvent.class, e -> {
+            Groups.player.forEach(player -> {
+                if (!mPlayers.contains(player)) {
+
+                }
+            });
+        });
 
         globalEventHandler.addEventCallback(EntityAttackEvent.class, event -> {
             final Entity source = event.getEntity();
@@ -161,8 +196,6 @@ public class PlayerInit {
             Vector velocity = player.getPosition().clone().getDirection().multiply(6);
             itemEntity.setVelocity(velocity);
         });
-
-        List<mindustry.gen.Player> mPlayers = new ArrayList<mindustry.gen.Player>();
         
         globalEventHandler.addEventCallback(PlayerDisconnectEvent.class, event -> {
             net.minestom.server.entity.Player player = event.getPlayer();
@@ -234,13 +267,13 @@ public class PlayerInit {
 
         globalEventHandler.addEventCallback(PlayerUseItemEvent.class, useEvent -> {
             final net.minestom.server.entity.Player player = useEvent.getPlayer();
-            player.sendMessage("Using item in air: " + useEvent.getItemStack().getMaterial());
+            player.sendMessage(Component.text("Using item in air: " + useEvent.getItemStack().getMaterial()));
         });
 
         globalEventHandler.addEventCallback(PlayerUseItemOnBlockEvent.class, useEvent -> {
             final net.minestom.server.entity.Player player = useEvent.getPlayer();
-            player.sendMessage("Main item: " + player.getInventory().getItemInMainHand().getMaterial());
-            player.sendMessage("Using item on block: " + useEvent.getItemStack().getMaterial() + " at " + useEvent.getPosition() + " on face " + useEvent.getBlockFace());
+            player.sendMessage(Component.text("Main item: " + player.getInventory().getItemInMainHand().getMaterial()));
+            player.sendMessage(Component.text("Using item on block: " + useEvent.getItemStack().getMaterial() + " at " + useEvent.getPosition() + " on face " + useEvent.getBlockFace()));
         });
 
         globalEventHandler.addEventCallback(PlayerChunkUnloadEvent.class, event -> {
@@ -263,9 +296,9 @@ public class PlayerInit {
         return (playerConnection, responseData) -> {
             responseData.setMaxPlayer(0);
             responseData.setOnline(MinecraftServer.getConnectionManager().getOnlinePlayers().size());
-            responseData.addPlayer("A name", UUID.randomUUID());
-            responseData.addPlayer("Could be some message", UUID.randomUUID());
-            responseData.setDescription("IP test: " + playerConnection.getRemoteAddress());
+            // responseData.addPlayer("A name", UUID.randomUUID());
+            // responseData.addPlayer("Could be some message", UUID.randomUUID());
+            responseData.setDescription(Component.text("IP test: " + playerConnection.getRemoteAddress()));
         };
     }
 

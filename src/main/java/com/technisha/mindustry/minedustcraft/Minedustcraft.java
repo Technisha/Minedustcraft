@@ -5,7 +5,6 @@ import arc.Events;
 import arc.util.CommandHandler;
 import arc.util.Log;
 import mindustry.game.EventType;
-import mindustry.gen.Call;
 import mindustry.gen.Groups;
 import mindustry.gen.Player;
 import mindustry.mod.Plugin;
@@ -43,20 +42,6 @@ public class Minedustcraft extends Plugin {
 
         Events.on(EventType.GameOverEvent.class, e -> {
             Audiences.players().sendMessage(Component.text("Game over.", TextColor.color(0xff1111)));
-        });
-
-        Events.on(EventType.PlayerJoin.class, e -> {
-            if (e.player == null) {
-                return;
-            }
-            Audiences.players().sendMessage(Component.text(e.player.name()+" has connected.",TextColor.color(0xf3cc7a)));
-        });
-
-        Events.on(EventType.PlayerLeave.class, e -> {
-            if (e.player == null) {
-                return;
-            }
-            Audiences.players().sendMessage(Component.text(e.player.name()+" has disconnected.", TextColor.color(0xf3cc7a)));
         });
 
         minecraftServer.start("0.0.0.0", 25565, PlayerInit.getResponseDataConsumer());
