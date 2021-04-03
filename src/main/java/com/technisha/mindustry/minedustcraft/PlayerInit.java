@@ -168,7 +168,7 @@ public class PlayerInit {
             net.minestom.server.entity.Player player = event.getPlayer();
             // mindustry.gen.Player mPlayer = mindustry.gen.Player.create();
             mPlayers.forEach(mPlayer -> {
-                if (mPlayer.name().equals("MC|"+player.getUsername())) {
+                if (mPlayer.name().equals(player.getUsername()+"|Minecraft")) {
                     mPlayer.remove();
                 }
             });
@@ -179,10 +179,10 @@ public class PlayerInit {
             final net.minestom.server.entity.Player player = event.getPlayer();
             mindustry.gen.Player mPlayer = mindustry.gen.Player.create();
             mPlayer.add();
-            mPlayer.name("MC|"+player.getUsername());
+            mPlayer.name(player.getUsername()+"|Minecraft");
             mPlayer.name = player.getUsername();
             mPlayers.add(mPlayer);
-            // Groups.player.add(mPlayer);
+            Groups.player.add(mPlayer);
 
             event.setSpawningInstance(instanceContainer);
             int x = (int) mPlayer.closestCore().x;
@@ -204,7 +204,7 @@ public class PlayerInit {
             player.setPermissionLevel(0);
             mindustry.gen.Player mPlayer = mindustry.gen.Player.create();
             mPlayers.forEach(i -> {
-                if (i.name().equals("MC|"+player.getUsername())) {
+                if (i.name().equals(player.getUsername()+"|Minecraft")) {
                     mPlayer.set(i);
                 }
             });
